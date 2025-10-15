@@ -7,7 +7,7 @@ A powerful AI-powered document question-answering system built with FastAPI, Ope
 ![OpenAI](https://img.shields.io/badge/OpenAI-API-orange.svg)
 
 ## Live Site Link
-!(https://python-ai-assesment.onrender.com/)
+ - DEMO: https://python-ai-assesment.onrender.com
 
 ## ✨ Features
 

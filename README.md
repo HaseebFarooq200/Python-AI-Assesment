@@ -5,7 +5,6 @@ A powerful AI-powered document question-answering system built with FastAPI, Ope
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)
 ![OpenAI](https://img.shields.io/badge/OpenAI-API-orange.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ## ✨ Features
 

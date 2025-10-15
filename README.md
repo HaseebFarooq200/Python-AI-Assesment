@@ -209,16 +209,9 @@ curl -X POST "http://localhost:8000/query" \
 
 Mohammad Haseeb Khan - haseebfarooq200@gmail.com
 
-Project Link: [[https://github.com/yourusername/document-qa-system](https://github.com/HaseebFarooq200/Python-AI-Assesment)]([https://github.com/yourusername/document-qa-system](https://github.com/HaseebFarooq200/Python-AI-Assesment))
+Project Link: [[https://github.com/HaseebFarooq200/Python-AI-Assesment]]([https://github.com/HaseebFarooq200/Python-AI-Assesment])
 
 ---
 
 ⭐ If you find this project useful, please consider giving it a star!
 
-## 🔄 Version History
-
-- **v1.0.0** (2024)
-  - Initial release
-  - Text and file upload support
-  - Basic Q&A functionality
-  - Vector search implementation

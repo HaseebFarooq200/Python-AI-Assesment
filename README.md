@@ -57,8 +57,8 @@ A powerful AI-powered document question-answering system built with FastAPI, Ope
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/document-qa-system.git
-cd document-qa-system
+git clone https://github.com/yourusername/Python-AI-Assesment.git
+cd Python-AI-Assesment
 ```
 
 ### 2. Create Virtual Environment
@@ -169,7 +169,7 @@ Supported formats: PDF, DOCX, TXT, MD
 | DELETE | `/documents/{doc_id}` | Delete a document |
 | GET | `/health` | Check API status |
 
-### Example API Calls
+### Test Data API Calls
 
 **Upload a document:**
 ```bash
@@ -209,17 +209,11 @@ curl -X POST "http://localhost:8000/query" \
 
 Mohammad Haseeb Khan - haseebfarooq200@gmail.com
 
-Project Link: [https://github.com/yourusername/document-qa-system](https://github.com/yourusername/document-qa-system)
+Project Link: [[https://github.com/yourusername/document-qa-system](https://github.com/HaseebFarooq200/Python-AI-Assesment)]([https://github.com/yourusername/document-qa-system](https://github.com/HaseebFarooq200/Python-AI-Assesment))
 
 ---
 
 ⭐ If you find this project useful, please consider giving it a star!
-
-## 📚 Additional Resources
-
-- [OpenAI API Documentation](https://platform.openai.com/docs)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Vector Search Explained](https://www.pinecone.io/learn/vector-search/)
 
 ## 🔄 Version History
 

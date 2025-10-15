@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Q&A System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .file-upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            background: #f0f3ff;
+            border-color: #764ba2;
+        }
+
+        .file-upload-area.drag-over {
+            background: #e8ecff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .file-upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .file-upload-text {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .file-upload-hint {
+            color: #999;
+            font-size: 14px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .selected-files {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: #666;
+            margin-left: 10px;
+        }
+
+        .remove-file {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .remove-file:hover {
+            background: #c82333;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .documents-list {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .document-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .document-info {
+            flex: 1;
+        }
+
+        .document-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .document-meta {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            padding: 8px 20px;
+            font-size: 14px;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .answer-box {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .answer-text {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .sources {
+            margin-top: 20px;
+        }
+
+        .source-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .source-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .source-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .similarity-score {
+            font-size: 12px;
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+            padding: 20px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #28a745;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .api-status {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #28a745;
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Document Q&A System</h1>
+        
+        <div class="api-status" id="apiStatus">
+            <span class="status-indicator status-offline"></span>
+            <span>Checking API status...</span>
+        </div>
+
+        <div class="card">
+            <h2>📄 Add Documents</h2>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('text')">✍️ Text Input</button>
+                <button class="tab" onclick="switchTab('file')">📁 File Upload</button>
+            </div>
+
+            <div id="textTab" class="tab-content active">
+                <div class="form-group">
+                    <label for="docTitle">Document Title</label>
+                    <input type="text" id="docTitle" placeholder="Enter document title">
+                </div>
+                <div class="form-group">
+                    <label for="docContent">Document Content</label>
+                    <textarea id="docContent" placeholder="Enter document content..."></textarea>
+                </div>
+                <button onclick="addDocument()">Add Document</button>
+            </div>
+
+            <div id="fileTab" class="tab-content">
+                <div class="file-upload-area" id="dropArea" onclick="document.getElementById('fileInput').click()">
+                    <div class="file-upload-icon">📁</div>
+                    <div class="file-upload-text">Click to select files or drag and drop</div>
+                    <div class="file-upload-hint">Supports PDF, DOCX, TXT, MD files (Multiple files allowed)</div>
+                </div>
+                <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt,.md">
+                
+                <div id="selectedFiles" class="selected-files"></div>
+                
+                <div id="uploadProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <button id="uploadBtn" onclick="uploadFiles()" style="margin-top: 20px; display: none;">Upload Files</button>
+            </div>
+
+            <div id="addDocMessage"></div>
+        </div>
+
+        <div class="card">
+            <h2>❓ Ask Questions</h2>
+            <div class="form-group">
+                <label for="question">Your Question</label>
+                <input type="text" id="question" placeholder="Ask a question about your documents...">
+            </div>
+            <button onclick="askQuestion()">Get Answer</button>
+            <div id="answerContainer"></div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Indexed Documents</h2>
+            <button onclick="loadDocuments()">Refresh List</button>
+            <div id="documentsList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let selectedFiles = [];
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'text') {
+                document.querySelector('.tab:nth-child(1)').classList.add('active');
+                document.getElementById('textTab').classList.add('active');
+            } else {
+                document.querySelector('.tab:nth-child(2)').classList.add('active');
+                document.getElementById('fileTab').classList.add('active');
+            }
+            
+            document.getElementById('addDocMessage').innerHTML = '';
+        }
+
+        // File upload handling
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.classList.add('drag-over');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.classList.remove('drag-over');
+            }, false);
+        });
+
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        fileInput.addEventListener('change', function(e) {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            displaySelectedFiles();
+        }
+
+        function displaySelectedFiles() {
+            const container = document.getElementById('selectedFiles');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            if (selectedFiles.length === 0) {
+                container.innerHTML = '';
+                uploadBtn.style.display = 'none';
+                return;
+            }
+
+            uploadBtn.style.display = 'block';
+            
+            container.innerHTML = `
+                <h4 style="color: #667eea; margin-bottom: 10px;">Selected Files (${selectedFiles.length}):</h4>
+                ${selectedFiles.map((file, index) => `
+                    <div class="file-item">
+                        <div>
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-size">(${formatFileSize(file.size)})</span>
+                        </div>
+                        <button class="remove-file" onclick="removeFile(${index})">Remove</button>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displaySelectedFiles();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        async function uploadFiles() {
+            if (selectedFiles.length === 0) {
+                alert('Please select files first');
+                return;
+            }
+
+            const messageEl = document.getElementById('addDocMessage');
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressFill = document.getElementById('progressFill');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            uploadBtn.disabled = true;
+            progressDiv.style.display = 'block';
+            progressFill.style.width = '0%';
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            try {
+                progressFill.style.width = '50%';
+                
+                const response = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                progressFill.style.width = '100%';
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to upload files');
+                }
+
+                const data = await response.json();
+                
+                const totalChunks = data.reduce((sum, doc) => sum + doc.chunks_count, 0);
+                messageEl.innerHTML = `
+                    <div class="success">
+                        Successfully uploaded ${data.length} file(s)!<br>
+                        Created ${totalChunks} total chunks.
+                    </div>
+                `;
+                
+                selectedFiles = [];
+                displaySelectedFiles();
+                fileInput.value = '';
+                
+                setTimeout(() => {
+                    progressDiv.style.display = 'none';
+                }, 1000);
+                
+                loadDocuments();
+                checkAPIStatus();
+            } catch (error) {
+                messageEl.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                progressDiv.style.display = 'none';
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        }
+
+        // Check API status on load
+        async function checkAPIStatus() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                const statusEl = document.getElementById('apiStatus');
+                statusEl.innerHTML = `
+                    <span class="status-indicator status-online"></span>
+                    <span>SERVER Online | Documents: ${data.documents_count} | Chunks: ${data.chunks_count}</span>
+                `;
+            } catch (error) {
+                const statusEl = document.getElementById('apiStatus');
+                statusEl.innerHTML = `
+                    <span class="status-indicator status-offline"></span>
+                    <span>API Offline - Please start the FastAPI server</span>
+                `;
+            }
+        }
+
+        async function addDocument() {
+            const title = document.getElementById('docTitle').value;
+            const content = document.getElementById('docContent').value;
+            const messageEl = document.getElementById('addDocMessage');
+
+            if (!title || !content) {
+                messageEl.innerHTML = '<div class="error">Please fill in both title and content</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/documents`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        documents: [{
+                            title: title,
+                            content: content
+                        }]
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to add document');
+
+                const data = await response.json();
+                messageEl.innerHTML = `<div class="success">Document added successfully! Created ${data[0].chunks_count} chunks.</div>`;
+                
+                document.getElementById('docTitle').value = '';
+                document.getElementById('docContent').value = '';
+                
+                loadDocuments();
+                checkAPIStatus();
+            } catch (error) {
+                messageEl.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function askQuestion() {
+            const question = document.getElementById('question').value;
+            const containerEl = document.getElementById('answerContainer');
+
+            if (!question) {
+                containerEl.innerHTML = '<div class="error">Please enter a question</div>';
+                return;
+            }
+
+            containerEl.innerHTML = '<div class="loading">🤔 Searching documents and generating answer...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        top_k: 3
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to get answer');
+                }
+
+                const data = await response.json();
+                
+                let sourcesHTML = data.sources.map((source, idx) => `
+                    <div class="source-item">
+                        <div class="source-title">Source ${idx + 1}: ${source.title}</div>
+                        <div class="source-text">${source.chunk}</div>
+                        <div class="similarity-score">Relevance: ${(source.similarity_score * 100).toFixed(1)}%</div>
+                    </div>
+                `).join('');
+
+                containerEl.innerHTML = `
+                    <div class="answer-box">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">Answer:</h3>
+                        <div class="answer-text">${data.answer}</div>
+                        <div class="sources">
+                            <h4 style="color: #667eea; margin-bottom: 10px;">Sources Used:</h4>
+                            ${sourcesHTML}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                containerEl.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadDocuments() {
+            const listEl = document.getElementById('documentsList');
+            listEl.innerHTML = '<div class="loading">Loading documents...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/documents`);
+                if (!response.ok) throw new Error('Failed to load documents');
+
+                const documents = await response.json();
+
+                if (documents.length === 0) {
+                    listEl.innerHTML = '<div class="empty-state">No documents indexed yet. Add your first document above!</div>';
+                    return;
+                }
+
+                listEl.innerHTML = `
+                    <div class="documents-list">
+                        ${documents.map(doc => `
+                            <div class="document-item">
+                                <div class="document-info">
+                                    <div class="document-title">${doc.title}</div>
+                                    <div class="document-meta">ID: ${doc.id} | Chunks: ${doc.chunks_count}</div>
+                                </div>
+                                <button class="delete-btn" onclick="deleteDocument('${doc.id}')">Delete</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                listEl.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function deleteDocument(docId) {
+            if (!confirm('Are you sure you want to delete this document?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/documents/${docId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Failed to delete document');
+
+                loadDocuments();
+                checkAPIStatus();
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        checkAPIStatus();
+        loadDocuments();
+    </script>
+</body>
+</html>

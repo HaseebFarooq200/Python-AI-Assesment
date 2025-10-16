@@ -6,6 +6,9 @@ A powerful AI-powered document question-answering system built with FastAPI, Ope
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)
 ![OpenAI](https://img.shields.io/badge/OpenAI-API-orange.svg)
 
+## Live Site Link
+ - Check out the Demo:  https://python-ai-assesment.onrender.com
+
 ## ✨ Features
 
 - 📄 **Multiple Input Methods**
@@ -57,7 +60,7 @@ A powerful AI-powered document question-answering system built with FastAPI, Ope
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/Python-AI-Assesment.git
+git clone https://github.com/HaseebFarooq200/Python-AI-Assesment.git
 cd Python-AI-Assesment
 ```
 

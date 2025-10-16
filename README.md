@@ -60,7 +60,7 @@ A powerful AI-powered document question-answering system built with FastAPI, Ope
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/Python-AI-Assesment.git
+git clone https://github.com/HaseebFarooq200/Python-AI-Assesment.git
 cd Python-AI-Assesment
 ```
 

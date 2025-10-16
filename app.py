@@ -1,5 +1,6 @@
 import io
 import os
+import uvicorn
 import uuid
 import logging
 import docx
@@ -228,7 +229,6 @@ def index_document_content(title: str, content: str) -> DocumentResponse:
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
     return {
         "status": "running",
         "api_key_configured": bool(api_key),
@@ -236,24 +236,9 @@ async def health_check():
         "chunks_count": len(vectors_store)
     }
 
-@app.get("/test-openai")
-async def test_openai():
-    """Test OpenAI connection"""
-    try:
-        logger.info("Testing OpenAI connection...")
-        response = client.embeddings.create(
-            model="text-embedding-3-small",
-            input="test"
-        )
-        logger.info("OpenAI test successful")
-        return {"status": "success", "message": "OpenAI API is working correctly"}
-    except Exception as e:
-        logger.error(f"OpenAI test failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"OpenAI test failed: {str(e)}")
 
 @app.post("/documents", response_model=List[DocumentResponse])
 async def index_documents(doc_list: DocumentList):
-    """Index multiple documents from JSON"""
     try:
         logger.info(f"Received request to index {len(doc_list.documents)} documents")
         responses = []
@@ -272,7 +257,6 @@ async def index_documents(doc_list: DocumentList):
 
 @app.post("/upload", response_model=List[DocumentResponse])
 async def upload_files(files: List[UploadFile] = File(...)):
-    """Upload and index files (PDF, DOCX, TXT, MD)"""
     try:
         logger.info(f"Received {len(files)} files for upload")
         responses = []
@@ -280,11 +264,9 @@ async def upload_files(files: List[UploadFile] = File(...)):
         for file in files:
             logger.info(f"Processing file: {file.filename}")
             
-            # Read file content
             file_content = await file.read()
             logger.info(f"Read {len(file_content)} bytes from {file.filename}")
             
-            # Extract text
             text_content = extract_text_from_file(file.filename, file_content)
             
             if not text_content or not text_content.strip():
@@ -296,7 +278,6 @@ async def upload_files(files: List[UploadFile] = File(...)):
             
             logger.info(f"Extracted {len(text_content)} characters from {file.filename}")
             
-            # Index the document
             response = index_document_content(file.filename, text_content)
             responses.append(response)
         
@@ -309,17 +290,14 @@ async def upload_files(files: List[UploadFile] = File(...)):
 
 @app.post("/query", response_model=Answer)
 async def query_documents(query: Query):
-    """Query indexed documents"""
     try:
         logger.info(f"Received query: {query.question}")
         
         if not vectors_store:
             raise HTTPException(status_code=400, detail="No documents indexed yet. Please upload documents first.")
         
-        # Get query embedding
         query_embedding = get_embedding(query.question)
         
-        # Calculate similarities
         similarities = []
         for chunk_id, vector_data in vectors_store.items():
             similarity = cosine_similarity(
@@ -335,19 +313,15 @@ async def query_documents(query: Query):
                 "similarity": float(similarity)
             })
         
-        # Sort by similarity
         similarities.sort(key=lambda x: x["similarity"], reverse=True)
         top_results = similarities[:query.top_k]
         
         logger.info(f"Found {len(top_results)} relevant chunks")
         
-        # Build context
         context = "\n\n".join([f"[{r['title']}]\n{r['chunk']}" for r in top_results])
         
-        # Generate answer
         answer_text = generate_answer(query.question, context)
         
-        # Prepare sources
         sources = [
             {
                 "doc_id": r["doc_id"],
@@ -367,7 +341,6 @@ async def query_documents(query: Query):
 
 @app.get("/documents", response_model=List[DocumentResponse])
 async def list_documents():
-    """List all indexed documents"""
     try:
         return [
             DocumentResponse(
@@ -383,18 +356,14 @@ async def list_documents():
 
 @app.delete("/documents/{doc_id}")
 async def delete_document(doc_id: str):
-    """Delete a specific document"""
     try:
         if doc_id not in documents_store:
             raise HTTPException(status_code=404, detail="Document not found")
         
-        # Get document title for logging
         doc_title = documents_store[doc_id]["title"]
         
-        # Delete from documents store
         del documents_store[doc_id]
         
-        # Delete all chunks from vectors store
         chunks_to_remove = [
             chunk_id for chunk_id, vector_data in vectors_store.items()
             if vector_data["doc_id"] == doc_id
@@ -417,6 +386,5 @@ async def delete_document(doc_id: str):
         raise HTTPException(status_code=500, detail=f"Error deleting document: {str(e)}")
 
 if __name__ == "__main__":
-    import uvicorn
     logger.info("Starting server...")
     uvicorn.run(app, host="0.0.0.0", port=8000)

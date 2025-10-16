@@ -15,22 +15,16 @@ from sklearn.metrics.pairwise import cosine_similarity
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 
-
-
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 app = FastAPI(title="Document Q&A API", version="1.0.0")
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-def read_root():
-    return FileResponse(os.path.join("static", "index.html"))
-
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,7 +33,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize OpenAI client
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+    
+    @app.get("/")
+    def read_root():
+        return FileResponse(os.path.join("static", "index.html"))
+else:
+    logger.warning("Static directory not found. Skipping static file mounting.")
+    
+    @app.get("/")
+    def read_root():
+        return {
+            "message": "Document Q&A API",
+            "version": "1.0.0",
+            "endpoints": {
+                "health": "/health",
+                "test_openai": "/test-openai",
+                "upload": "/upload",
+                "documents": "/documents",
+                "query": "/query"
+            }
+        }
+
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     logger.error("OPENAI_API_KEY not found in environment variables!")
@@ -50,7 +66,6 @@ logger.info("OpenAI client initialized successfully")
 
 documents_store = {}
 vectors_store = {}
-
 
 class Document(BaseModel):
     title: str
@@ -72,18 +87,17 @@ class DocumentResponse(BaseModel):
     title: str
     chunks_count: int
 
+# ---------------------------------------- FUNCTIONS ----------------------------------------
 
-
-
-#---------------------------------------- FUNCTIONS ----------------------------------------#
-    
 def extract_text_from_pdf(file_content: bytes) -> str:
     try:
         pdf_file = io.BytesIO(file_content)
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         text = ""
         for page in pdf_reader.pages:
-            text += page.extract_text() + "\n"
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
         return text.strip()
     except Exception as e:
         logger.error(f"Error extracting text from PDF: {str(e)}")
@@ -93,7 +107,7 @@ def extract_text_from_docx(file_content: bytes) -> str:
     try:
         doc_file = io.BytesIO(file_content)
         doc = docx.Document(doc_file)
-        text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+        text = "\n".join([paragraph.text for paragraph in doc.paragraphs if paragraph.text.strip()])
         return text.strip()
     except Exception as e:
         logger.error(f"Error extracting text from DOCX: {str(e)}")
@@ -128,7 +142,7 @@ def extract_text_from_file(filename: str, file_content: bytes) -> str:
 
 def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> List[str]:
     if not text or not text.strip():
-        return [text]
+        return [text] if text else [""]
     
     words = text.split()
     if len(words) <= chunk_size:
@@ -179,7 +193,7 @@ def index_document_content(title: str, content: str) -> DocumentResponse:
     doc_id = str(uuid.uuid4())
     
     chunks = chunk_text(content)
-    logger.info(f"Created {len(chunks)} chunks for document")
+    logger.info(f"Created {len(chunks)} chunks for document: {title}")
     
     documents_store[doc_id] = {
         "id": doc_id,
@@ -210,10 +224,36 @@ def index_document_content(title: str, content: str) -> DocumentResponse:
         chunks_count=len(chunks)
     )
 
-#---------------------------------------- API ENDPOINTS ----------------------------------------#
+# ---------------------------------------- API ENDPOINTS ----------------------------------------
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "running",
+        "api_key_configured": bool(api_key),
+        "documents_count": len(documents_store),
+        "chunks_count": len(vectors_store)
+    }
+
+@app.get("/test-openai")
+async def test_openai():
+    """Test OpenAI connection"""
+    try:
+        logger.info("Testing OpenAI connection...")
+        response = client.embeddings.create(
+            model="text-embedding-3-small",
+            input="test"
+        )
+        logger.info("OpenAI test successful")
+        return {"status": "success", "message": "OpenAI API is working correctly"}
+    except Exception as e:
+        logger.error(f"OpenAI test failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"OpenAI test failed: {str(e)}")
 
 @app.post("/documents", response_model=List[DocumentResponse])
 async def index_documents(doc_list: DocumentList):
+    """Index multiple documents from JSON"""
     try:
         logger.info(f"Received request to index {len(doc_list.documents)} documents")
         responses = []
@@ -232,6 +272,7 @@ async def index_documents(doc_list: DocumentList):
 
 @app.post("/upload", response_model=List[DocumentResponse])
 async def upload_files(files: List[UploadFile] = File(...)):
+    """Upload and index files (PDF, DOCX, TXT, MD)"""
     try:
         logger.info(f"Received {len(files)} files for upload")
         responses = []
@@ -239,8 +280,11 @@ async def upload_files(files: List[UploadFile] = File(...)):
         for file in files:
             logger.info(f"Processing file: {file.filename}")
             
+            # Read file content
             file_content = await file.read()
+            logger.info(f"Read {len(file_content)} bytes from {file.filename}")
             
+            # Extract text
             text_content = extract_text_from_file(file.filename, file_content)
             
             if not text_content or not text_content.strip():
@@ -250,6 +294,9 @@ async def upload_files(files: List[UploadFile] = File(...)):
                     detail=f"No text could be extracted from {file.filename}"
                 )
             
+            logger.info(f"Extracted {len(text_content)} characters from {file.filename}")
+            
+            # Index the document
             response = index_document_content(file.filename, text_content)
             responses.append(response)
         
@@ -262,14 +309,17 @@ async def upload_files(files: List[UploadFile] = File(...)):
 
 @app.post("/query", response_model=Answer)
 async def query_documents(query: Query):
+    """Query indexed documents"""
     try:
         logger.info(f"Received query: {query.question}")
         
         if not vectors_store:
-            raise HTTPException(status_code=400, detail="No documents indexed yet")
+            raise HTTPException(status_code=400, detail="No documents indexed yet. Please upload documents first.")
         
+        # Get query embedding
         query_embedding = get_embedding(query.question)
         
+        # Calculate similarities
         similarities = []
         for chunk_id, vector_data in vectors_store.items():
             similarity = cosine_similarity(
@@ -285,15 +335,19 @@ async def query_documents(query: Query):
                 "similarity": float(similarity)
             })
         
+        # Sort by similarity
         similarities.sort(key=lambda x: x["similarity"], reverse=True)
         top_results = similarities[:query.top_k]
         
         logger.info(f"Found {len(top_results)} relevant chunks")
         
+        # Build context
         context = "\n\n".join([f"[{r['title']}]\n{r['chunk']}" for r in top_results])
         
+        # Generate answer
         answer_text = generate_answer(query.question, context)
         
+        # Prepare sources
         sources = [
             {
                 "doc_id": r["doc_id"],
@@ -313,6 +367,7 @@ async def query_documents(query: Query):
 
 @app.get("/documents", response_model=List[DocumentResponse])
 async def list_documents():
+    """List all indexed documents"""
     try:
         return [
             DocumentResponse(
@@ -328,12 +383,18 @@ async def list_documents():
 
 @app.delete("/documents/{doc_id}")
 async def delete_document(doc_id: str):
+    """Delete a specific document"""
     try:
         if doc_id not in documents_store:
             raise HTTPException(status_code=404, detail="Document not found")
         
+        # Get document title for logging
+        doc_title = documents_store[doc_id]["title"]
+        
+        # Delete from documents store
         del documents_store[doc_id]
         
+        # Delete all chunks from vectors store
         chunks_to_remove = [
             chunk_id for chunk_id, vector_data in vectors_store.items()
             if vector_data["doc_id"] == doc_id
@@ -342,37 +403,20 @@ async def delete_document(doc_id: str):
         for chunk_id in chunks_to_remove:
             del vectors_store[chunk_id]
         
-        logger.info(f"Deleted document {doc_id} with {len(chunks_to_remove)} chunks")
+        logger.info(f"Deleted document '{doc_title}' (ID: {doc_id}) with {len(chunks_to_remove)} chunks")
         
-        return {"message": f"Document {doc_id} deleted successfully", "chunks_removed": len(chunks_to_remove)}
+        return {
+            "message": f"Document '{doc_title}' deleted successfully",
+            "doc_id": doc_id,
+            "chunks_removed": len(chunks_to_remove)
+        }
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error deleting document: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting document: {str(e)}")
 
-@app.get("/health")
-async def root():
-    return {
-        "status": "running",
-        "api_key_configured": bool(api_key),
-        "documents_count": len(documents_store),
-        "chunks_count": len(vectors_store)
-    }
-
-@app.get("/test-openai")
-async def test_openai():
-    """Test OpenAI connection"""
-    try:
-        response = client.embeddings.create(
-            model="text-embedding-3-small",
-            input="test"
-        )
-        return {"status": "success", "message": "OpenAI API is working correctly"}
-    except Exception as e:
-        logger.error(f"OpenAI test failed: {str(e)}")
-        return {"status": "error", "message": str(e)}
-
 if __name__ == "__main__":
     import uvicorn
+    logger.info("Starting server...")
     uvicorn.run(app, host="0.0.0.0", port=8000)

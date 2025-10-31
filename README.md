@@ -60,8 +60,8 @@ A powerful AI-powered document question-answering system built with FastAPI, Ope
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/HaseebFarooq200/Python-AI-Assesment.git
-cd Python-AI-Assesment
+git clone https://github.com/HaseebFarooq200/Python-AI-RAG-Application.git
+cd Python-AI-RAG-Application
 ```
 
 ### 2. Create Virtual Environment
@@ -212,7 +212,7 @@ curl -X POST "http://localhost:8000/query" \
 
 Mohammad Haseeb Khan - haseebfarooq200@gmail.com
 
-Project Link: [[https://github.com/HaseebFarooq200/Python-AI-Assesment]]([https://github.com/HaseebFarooq200/Python-AI-Assesment])
+Project Link: [[https://github.com/HaseebFarooq200/Python-AI-RAG-Application]]([https://github.com/HaseebFarooq200/Python-AI-RAG-Application])
 
 ---
 
